@@ -85,29 +85,30 @@ module.exports = function (ary) {
 
   function next () {
     var l = inputs.length
-    while(l--)
-      (function (current) {
-        //read the next item if we aren't already
-        if(l > inputs.length) throw new Error('this should never happen')
-        if(current.reading || current.ended || current.ready) return
-        current.reading = true
-        var sync = true
-        current.read(abort, function next (end, data) {
-          current.data = data
-          current.ready = true
-          current.reading = false
-
-          if(end === true || abort) current.ended = true
-          else if(end) abort = current.ended = end
-          //check whether we need to abort this stream.
-          if(abort && !end) current.read(abort, next)
-          if(!sync) check()
-        })
-        sync = false
-      })(inputs[l])
+    while(l--) _next(l, inputs[l])
 
     //scan the feed
     check()
+  }
+
+  function _next (l, current) {
+    //read the next item if we aren't already
+    if(l > inputs.length) throw new Error('this should never happen')
+    if(current.reading || current.ended || current.ready) return
+    current.reading = true
+    var sync = true
+    current.read(abort, function next (end, data) {
+      current.data = data
+      current.ready = true
+      current.reading = false
+
+      if(end === true || abort) current.ended = true
+      else if(end) abort = current.ended = end
+      //check whether we need to abort this stream.
+      if(abort && !end) current.read(abort, next)
+      if(!sync) check()
+    })
+    sync = false
   }
 
   function read (_abort, _cb) {
@@ -131,4 +132,3 @@ module.exports = function (ary) {
 
   return read
 }
-
